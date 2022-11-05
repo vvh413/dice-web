@@ -1,4 +1,7 @@
+use actix_web::middleware::Logger;
+use actix_web::HttpResponse;
 use actix_web::{get, web, App, HttpServer, Result};
+use env_logger::Env;
 use rand::thread_rng;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
@@ -36,8 +39,18 @@ async fn dice(roll: web::Path<Roll>) -> Result<web::Json<Dice>> {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| App::new().service(dice))
-        .bind(("0.0.0.0", 8000))?
-        .run()
-        .await
+    env_logger::init_from_env(Env::default().default_filter_or("info"));
+
+    HttpServer::new(|| {
+        App::new()
+            .service(dice)
+            .route("/health", web::get().to(HttpResponse::Ok))
+            .default_service(web::to(|| async {
+                HttpResponse::NotFound().body("Not Found")
+            }))
+            .wrap(Logger::default().exclude("/health"))
+    })
+    .bind(("0.0.0.0", 8000))?
+    .run()
+    .await
 }
