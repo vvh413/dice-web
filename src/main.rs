@@ -37,6 +37,11 @@ async fn dice(roll: web::Path<Roll>) -> Result<web::Json<Dice>> {
     Ok(web::Json(Dice::roll(roll.x, roll.y)))
 }
 
+#[get("/")]
+async fn default() -> Result<web::Json<Dice>> {
+    Ok(web::Json(Dice::roll(1, 100)))
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     env_logger::init_from_env(Env::default().default_filter_or("info"));
@@ -44,6 +49,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
             .service(dice)
+            .service(default)
             .route("/health", web::get().to(HttpResponse::Ok))
             .default_service(web::to(|| async {
                 HttpResponse::NotFound().body("Not Found")
