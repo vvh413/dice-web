@@ -2,7 +2,8 @@ version: '3.7'
 
 services:
   app:
-    build:
-      context: .
+    # build:
+    #   context: .
+    image: vvh413/dice-api
     ports:
       - 8000:8000
