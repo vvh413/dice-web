@@ -7,7 +7,7 @@ use rand::thread_rng;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 
-const MAX_DICE: u32 = 2 << 27;
+const MAX_DICE: u32 = 2 << 25;
 
 #[derive(Deserialize)]
 struct Roll {
