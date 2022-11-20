@@ -1,3 +1,4 @@
+use actix_cors::Cors;
 use actix_web::middleware::Logger;
 use actix_web::{get, web, App, HttpServer};
 use actix_web::{HttpResponse, ResponseError};
@@ -94,6 +95,7 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(|| {
         App::new()
+            .wrap(Cors::permissive())
             .service(seeded_dice)
             .service(dice)
             .service(default)
