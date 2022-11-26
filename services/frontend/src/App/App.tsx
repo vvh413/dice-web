@@ -23,11 +23,10 @@ const App: Component = () => {
 
   const roll = async () => {
     try {
-      const url = `${Settings.dice_api_url}/${x()}d${y()}` + (useSeed() ? `:${seed()}` : "")
+      const url = `${Settings.dice_api_url}/${x()}d${y()}` + (useSeed() ? `/${seed()}` : "")
       const res = await axios.get(url);
       setDice(res.data);
-      const urlParts = res.request?.responseURL.split(":");
-      setSeed(urlParts[urlParts.length - 1]);
+      setSeed(res.data.seed)
     } catch (e) {
       console.log(axios.isAxiosError(e) ? e.message : e);
     }

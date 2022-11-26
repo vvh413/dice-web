@@ -17,17 +17,11 @@ const MAX_DICE: u32 = 2 << 25;
 const API_SCOPE: &str = "/api";
 
 #[derive(Deserialize, Display)]
-#[display(fmt = "{}d{}", x, y)]
+#[display(fmt = "{}d{} ({:?})", x, y, seed)]
 struct Roll {
     x: u32,
     y: u64,
-}
-
-#[derive(Deserialize)]
-struct SeededRoll {
-    x: u32,
-    y: u64,
-    seed: String,
+    seed: Option<String>
 }
 
 #[derive(Debug, Display, Error)]
@@ -50,6 +44,7 @@ struct Dice {
     total: u64,
     min: u64,
     max: u64,
+    seed: String,
 }
 
 impl Dice {
@@ -66,31 +61,28 @@ impl Dice {
             total: values.iter().sum(),
             min: *values.iter().min().unwrap(),
             max: *values.iter().max().unwrap(),
+            seed: hex::encode(seed),
         })
     }
 }
 
-#[get("/{x}d{y}:{seed}")]
-async fn seeded_dice(roll: web::Path<SeededRoll>) -> Result<web::Json<Dice>, RollError> {
+#[get("/{x}d{y}/{seed}")]
+async fn seeded_dice(roll: web::Path<Roll>) -> Result<web::Json<Dice>, RollError> {
     let mut seed = [0u8; 32];
-    hex::decode_to_slice(roll.seed.clone(), &mut seed)?;
+    hex::decode_to_slice(roll.seed.clone().unwrap(), &mut seed)?;
     Ok(web::Json(Dice::roll(roll.x, roll.y, seed)?))
 }
 
 #[get("/{x}d{y}")]
-async fn dice(roll: web::Path<Roll>) -> HttpResponse {
-    let seed = hex::encode(ChaCha20Rng::from_entropy().get_seed());
-    HttpResponse::Found()
-        .append_header(("location", format!("{}/{}:{}", API_SCOPE, roll, seed)))
-        .finish()
+async fn dice(roll: web::Path<Roll>) -> Result<web::Json<Dice>, RollError> {
+    let seed = ChaCha20Rng::from_entropy().get_seed();
+    Ok(web::Json(Dice::roll(roll.x, roll.y, seed)?))
 }
 
-#[get("/")]
-async fn default() -> HttpResponse {
-    let seed = hex::encode(ChaCha20Rng::from_entropy().get_seed());
-    HttpResponse::Found()
-        .append_header(("location", format!("{}/1d100:{}", API_SCOPE, seed)))
-        .finish()
+#[get("")]
+async fn default() -> Result<web::Json<Dice>, RollError> {
+    let seed = ChaCha20Rng::from_entropy().get_seed();
+    Ok(web::Json(Dice::roll(1, 100, seed)?))
 }
 
 #[actix_web::main]
