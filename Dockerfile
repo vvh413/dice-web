@@ -1,6 +1,16 @@
-FROM rust:1.63-slim as rust-builder
-RUN apt-get update && apt-get install -y musl-tools curl
-RUN rustup target add x86_64-unknown-linux-musl
+FROM clux/muslrust:stable AS chef
+USER root
+RUN cargo install cargo-chef
+WORKDIR /app
+
+FROM chef AS planner
+COPY services/backend ./backend
+WORKDIR ./backend
+RUN cargo chef prepare --recipe-path recipe.json
+
+FROM chef AS rust-builder
+COPY --from=planner /app/backend/recipe.json recipe.json
+RUN cargo chef cook --release --target x86_64-unknown-linux-musl --recipe-path recipe.json
 COPY services/backend ./backend
 WORKDIR ./backend
 RUN cargo build --release --target x86_64-unknown-linux-musl
@@ -13,7 +23,7 @@ RUN yarn build
 
 FROM alpine
 RUN apk --no-cache add curl
-COPY --from=rust-builder ./backend/target/x86_64-unknown-linux-musl/release/dice-api /
+COPY --from=rust-builder /app/backend/target/x86_64-unknown-linux-musl/release/dice-api /
 COPY --from=node-builder ./frontend/dist /
 
 EXPOSE 8000
