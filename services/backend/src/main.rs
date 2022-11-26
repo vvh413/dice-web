@@ -1,8 +1,11 @@
 use actix_cors::Cors;
+use actix_files::Files;
+use actix_files::NamedFile;
 use actix_web::middleware::Logger;
 use actix_web::{get, web, App, HttpServer};
 use actix_web::{HttpResponse, ResponseError};
 use derive_more::{Display, Error};
+use dotenv::dotenv;
 use env_logger::Env;
 use hex::FromHexError;
 use rand::Rng;
@@ -11,6 +14,7 @@ use rand_chacha::ChaCha20Rng;
 use serde::{Deserialize, Serialize};
 
 const MAX_DICE: u32 = 2 << 25;
+const API_SCOPE: &str = "/api";
 
 #[derive(Deserialize, Display)]
 #[display(fmt = "{}d{}", x, y)]
@@ -77,7 +81,7 @@ async fn seeded_dice(roll: web::Path<SeededRoll>) -> Result<web::Json<Dice>, Rol
 async fn dice(roll: web::Path<Roll>) -> HttpResponse {
     let seed = hex::encode(ChaCha20Rng::from_entropy().get_seed());
     HttpResponse::Found()
-        .append_header(("location", format!("/{}:{}", roll, seed)))
+        .append_header(("location", format!("{}/{}:{}", API_SCOPE, roll, seed)))
         .finish()
 }
 
@@ -85,23 +89,37 @@ async fn dice(roll: web::Path<Roll>) -> HttpResponse {
 async fn default() -> HttpResponse {
     let seed = hex::encode(ChaCha20Rng::from_entropy().get_seed());
     HttpResponse::Found()
-        .append_header(("location", format!("/1d100:{}", seed)))
+        .append_header(("location", format!("{}/1d100:{}", API_SCOPE, seed)))
         .finish()
 }
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    dotenv().ok();
     env_logger::init_from_env(Env::default().default_filter_or("info"));
 
     HttpServer::new(|| {
+        let frontend_path = std::env::var("FRONTEND_PATH").unwrap_or("/".to_string());
         App::new()
             .wrap(Cors::permissive())
-            .service(seeded_dice)
-            .service(dice)
-            .service(default)
             .route("/health", web::get().to(HttpResponse::Ok))
+            .service(
+                web::scope(API_SCOPE)
+                    .service(seeded_dice)
+                    .service(dice)
+                    .service(default)
+                    .default_service(web::to(|| async {
+                        HttpResponse::NotFound().body("Not Found")
+                    })),
+            )
+            .service(
+                Files::new("/", frontend_path.clone())
+                    .index_file("index.html")
+                    .use_etag(true),
+            )
             .default_service(web::to(|| async {
-                HttpResponse::NotFound().body("Not Found")
+                let frontend_path = std::env::var("FRONTEND_PATH").unwrap_or("/".to_string());
+                NamedFile::open(format!("{}{}", frontend_path, "/index.html")).unwrap()
             }))
             .wrap(Logger::default().exclude("/health"))
     })

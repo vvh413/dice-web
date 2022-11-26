@@ -1,0 +1,31 @@
+.App {
+  text-align: center;
+  background-color: #181422;
+  color: #ffffff;
+  height: 100vh;
+  overflow: hidden;
+}
+
+button {
+  font-size: 0.75em;
+  background-color: #362844;
+  color: #ffffff;
+  border: none;
+}
+
+.input {
+  text-align: center;
+  font-size: 2em;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.d {
+  min-width: 1.5rem;
+}
+
+.roll {
+  margin-top: 2vh;
+  font-size: 2em;
+}

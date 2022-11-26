@@ -1,0 +1,20 @@
+.seed {
+  display: block;
+  width: 100%;
+  margin-top: 2vh;
+  margin-bottom: 2vh;
+}
+
+.seed .use {
+  display: block;
+  color: #aaaaaa;
+}
+
+.seed .value {
+  background-color: #181422;
+  text-align: center;
+  border: none;
+  outline: none;
+  color: #aaaaaa;
+  width: 90%;
+}

@@ -1,0 +1,19 @@
+.valueInput {
+  max-width: 5rem;
+}
+
+.valueInput * {
+  font-size: 1em;
+  margin: 1%;
+  width: 100%;
+  min-width: 3.5rem;
+  justify-content: center;
+  text-align: center;
+}
+
+.valueInput input {
+  background-color: #181422;
+  border: none;
+  outline: none;
+  color: #ffffff;
+}
