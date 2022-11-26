@@ -1,4 +1,4 @@
-# dice API
+# dice web
 
 ## Run
 
