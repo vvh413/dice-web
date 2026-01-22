@@ -14,7 +14,7 @@ COPY services/backend /app/backend
 WORKDIR /app/backend
 RUN cargo build --release --target x86_64-unknown-linux-musl
 
-FROM node:lts as node-builder
+FROM node:lts AS node-builder
 COPY services/frontend /app/frontend
 WORKDIR /app/frontend
 RUN yarn install && yarn build
